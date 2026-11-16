@@ -1,0 +1,50 @@
+[
+    {
+        "key": "BaseUrl",
+        "type": "input",
+        "defaultValue": "https://api.officient.io",
+        "templateOptions": {
+            "label": "BaseUrl",
+            "description": "The URL to the Officient API.",
+            "required": true
+        }
+    },
+    {
+        "key": "Token",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "type": "password",
+            "label": "Access token",
+            "description": "The access token used as a bearer token. See the README for the required scopes.",
+            "required": true
+        }
+    },
+    {
+        "key": "IncludeArchivedPersons",
+        "type": "checkbox",
+        "defaultValue": false,
+        "templateOptions": {
+            "label": "Include archived persons",
+            "description": "When toggled, archived persons are imported as well. This increases the number of API calls."
+        }
+    },
+    {
+        "key": "UseWageHistoryForContracts",
+        "type": "checkbox",
+        "defaultValue": true,
+        "templateOptions": {
+            "label": "Use wage history for contracts",
+            "description": "When toggled, the wage history periods of a person are used as contracts. This needs the wages:read scope, which exposes salary data (it is not imported). When off, one contract per person is built from the employment dates."
+        }
+    },
+    {
+        "key": "IsDebug",
+        "type": "checkbox",
+        "defaultValue": false,
+        "templateOptions": {
+            "label": "Toggle debug logging",
+            "description": "When toggled, extra logging is shown. Note that this is only meant for debugging, please switch this off when in production."
+        }
+    }
+]
