@@ -120,19 +120,19 @@
 
   <!-- 1 -->
   <section class="step">
-    <div class="step-head"><div class="num">1</div><h2>Request arrives</h2><span class="chip you">You</span></div>
+    <div class="step-head"><div class="num">1</div><h2>Upstream, outside the pipeline: request arrives</h2><span class="chip you">You</span></div>
     <div class="io">
       <div class="box in"><h3>Needs</h3><ul><li>A customer request</li></ul></div>
       <div class="box out"><h3>Makes</h3><ul>
-        <li><b>Azure DevOps ticket</b>: customer name, link to the API documentation, what the customer wants</li>
+        <li><b>Azure DevOps ticket</b>, free text: the API specification (a URL, or a JSON, YAML, PDF or Word file) and what the customer wants</li>
       </ul></div>
     </div>
-    <div class="signoff">Sign-off: <b>none</b>. The customer's wishes are adjusted as the last step.</div>
+    <div class="signoff">Sign-off: <b>none</b>. Without the API specification nothing is built. The customer's wishes are adjusted as the last step.</div>
   </section>
 
   <div class="hand"><div class="hand-card">
-    <div class="t">Handoff 1: request to API research</div>
-    <dl><dt>Passed on</dt><dd>Customer name, API documentation link, what the customer wants</dd>
+    <div class="t">Handoff 1: from the ticket to the API specification (the pipeline starts at step 2)</div>
+    <dl><dt>Passed on</dt><dd>The API specification (a URL or a file), what the customer wants</dd>
         <dt>Used by</dt><dd>Claude's API research</dd>
         <dt>Lives in</dt><dd>Azure DevOps ticket</dd></dl>
   </div></div>
@@ -142,12 +142,12 @@
     <div class="step-head"><div class="num">2</div><h2>Give Claude the API specification</h2><span class="chip you">You</span></div>
     <div class="io">
       <div class="box in"><h3>Needs</h3><ul>
-        <li><b>API specification</b>: JSON, YAML, Word or PDF</li>
-        <li>The connector name</li>
+        <li><b>API specification</b>: JSON, YAML, Word or PDF, found through the ticket</li>
       </ul></div>
       <div class="box out"><h3>Makes</h3><ul>
         <li>Path or link given in the session</li>
         <li>The spec stays outside the repo, wherever you keep it</li>
+        <li>The connector name: Claude proposes it from the spec, you confirm it</li>
       </ul></div>
     </div>
     <div class="signoff">Sign-off: <b>none</b>. Never add the spec to the repo.</div>
@@ -174,10 +174,17 @@
     <div class="io">
       <div class="box in"><h3>Needs</h3><ul>
         <li>The API specification</li>
+        <li>The baseline users file and the HelloID target systems documentation</li>
         <li>Vendor and customer answers, as you tell them</li>
       </ul></div>
       <div class="box out"><h3>Makes</h3><ul>
-        <li><b>Research report</b>: capabilities, caveats, which of create, enable, disable, update and delete are supported</li>
+        <li><b>Research report</b> with four parts:
+          <ul>
+            <li>a verdict: fits, fits with gaps, or does not fit</li>
+            <li>a table per action: create, enable, disable, update, delete</li>
+            <li>a field mapping table against the baseline</li>
+            <li>caveats and open questions</li>
+          </ul></li>
         <li><code>reports/&lt;Name&gt;-feasibility.md</code>, local, ignored by git</li>
       </ul></div>
     </div>
@@ -196,7 +203,7 @@
     <div class="step-head"><div class="num">5</div><h2>Create the branch and the connector folder</h2><span class="chip claude">Claude</span></div>
     <div class="io">
       <div class="box in"><h3>Needs</h3><ul>
-        <li>Your instruction to build, with the connector name</li>
+        <li>Your instruction to build, with the confirmed connector name</li>
         <li><b>Template</b>: the <code>target</code> folder of the Tools4ever V2 template repo</li>
         <li>A first commit on <code>main</code>, made by you</li>
       </ul></div>
@@ -215,13 +222,15 @@
       <div class="box in"><h3>Needs</h3><ul>
         <li>The template files in <code>Generated\&lt;Name&gt;</code></li>
         <li>The signed-off report</li>
+        <li>The API specification and the baseline users file</li>
       </ul></div>
       <div class="box out"><h3>Makes</h3><ul>
         <li><b>Connector code</b>: the five action scripts, <code>import.ps1</code>, <code>fieldMapping.json</code>, <code>configuration.json</code></li>
         <li><b>README</b> with a Remarks section for caveats, and <b>CHANGELOG</b></li>
+        <li><b>GitHub pull request</b> for the branch, created by Claude at the end of this step</li>
       </ul></div>
     </div>
-    <div class="signoff">Sign-off: <b>you sign off</b> the code, README and CHANGELOG before they go into the pull request. Everything in the README is published.</div>
+    <div class="signoff">Sign-off: <b>the pull request is your sign-off</b> of the code, README and CHANGELOG. Everything in the README is published.</div>
   </section>
 
   <div class="hand"><div class="hand-card">
@@ -251,27 +260,22 @@
     <div class="t">Handoff 4: testing to review</div>
     <dl><dt>Passed on</dt><dd>The code in a pull request. Caveats are in the README's Remarks section, and the pull request description only points to it.</dd>
         <dt>Used by</dt><dd>Your colleague</dd>
-        <dt>Lives in</dt><dd>Azure DevOps pull request</dd></dl>
-  </div></div>
-
-  <div class="hand"><div class="hand-card gapcard">
-    <div class="t">Gap: harness branch to Azure DevOps</div>
-    <dl><dt>Problem</dt><dd>The code now lives on a <code>harness</code> branch on GitHub, but the review is a pull request in Azure DevOps. How the code moves from one to the other is not decided.</dd></dl>
+        <dt>Lives in</dt><dd>GitHub pull request</dd></dl>
   </div></div>
 
   <!-- 8 -->
   <section class="step">
-    <div class="step-head"><div class="num">8</div><h2>Review</h2><span class="chip you">You open it</span><span class="chip mate">Colleague reviews</span></div>
+    <div class="step-head"><div class="num">8</div><h2>Review</h2><span class="chip mate">Colleague reviews</span></div>
     <div class="io">
       <div class="box in"><h3>Needs</h3><ul>
-        <li>The code, README and CHANGELOG</li>
+        <li>The GitHub pull request with the code, README and CHANGELOG</li>
       </ul></div>
       <div class="box out"><h3>Makes</h3><ul>
-        <li><b>Pull request</b> in Azure DevOps with code comments</li>
+        <li><b>Code comments</b> in the pull request on GitHub</li>
         <li>Usually one round of changes</li>
       </ul></div>
     </div>
-    <div class="signoff">Sign-off: <b>your colleague's review</b>. You create the pull request and its description yourself.</div>
+    <div class="signoff">Sign-off: <b>your colleague's review</b>. Claude created the pull request, and its description only points to the README's Remarks section.</div>
   </section>
 
   <div class="hand"><div class="hand-card">
@@ -315,8 +319,7 @@
   <section class="gaps">
     <h2>Gaps</h2>
     <ul>
-      <li>The route from the <code>harness</code> branch to the Azure DevOps pull request is not decided.</li>
-      <li>One line in <code>systems.md</code> still says you develop the code "in Azure DevOps". That is out of date next to steps 5 and 6.</li>
+      <li>What you do when a ticket arrives without an API specification is not decided. You can only say that nothing is built.</li>
     </ul>
   </section>
 
