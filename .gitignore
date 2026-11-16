@@ -1,0 +1,3 @@
+# Local only: scout reports and test folders of generated connectors
+reports/
+Generated/*/test/
