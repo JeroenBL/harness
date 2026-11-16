@@ -139,15 +139,16 @@
 
   <!-- 2 -->
   <section class="step">
-    <div class="step-head"><div class="num">2</div><h2>Give Claude the API specification</h2><span class="chip you">You</span></div>
+    <div class="step-head"><div class="num">2</div><h2>Give Claude the connector type and the API specification</h2><span class="chip you">You</span></div>
     <div class="io">
       <div class="box in"><h3>Needs</h3><ul>
+        <li><b>Connector type</b>: <code>source</code>, <code>target</code> or <code>target-access</code></li>
         <li><b>API specification</b>: JSON, YAML, Word or PDF, found through the ticket</li>
       </ul></div>
       <div class="box out"><h3>Makes</h3><ul>
         <li>Path or link given in the session</li>
         <li>The spec stays outside the repo, wherever you keep it</li>
-        <li>The connector name: Claude proposes it from the spec, you confirm it</li>
+        <li>The connector name: Claude takes it from the spec, or guesses it, and never asks you</li>
       </ul></div>
     </div>
     <div class="signoff">Sign-off: <b>none</b>. Never add the spec to the repo.</div>
@@ -174,13 +175,14 @@
     <div class="io">
       <div class="box in"><h3>Needs</h3><ul>
         <li>The API specification</li>
-        <li>The baseline users file and the HelloID target systems documentation</li>
+        <li>The connector type: <code>source</code>, <code>target</code> or <code>target-access</code></li>
+        <li>The baseline documents for that type, and the HelloID target systems documentation</li>
         <li>Vendor and customer answers, as you tell them</li>
       </ul></div>
       <div class="box out"><h3>Makes</h3><ul>
         <li><b>Research report</b> with four parts:
           <ul>
-            <li>a verdict: fits, fits with gaps, or does not fit</li>
+            <li>a verdict: feasible, feasible-with-caveats, not-feasible or insufficient-information</li>
             <li>a table per action: create, enable, disable, update, delete</li>
             <li>a field mapping table against the baseline</li>
             <li>caveats and open questions</li>
@@ -203,7 +205,8 @@
     <div class="step-head"><div class="num">5</div><h2>Create the branch and the connector folder</h2><span class="chip claude">Claude</span></div>
     <div class="io">
       <div class="box in"><h3>Needs</h3><ul>
-        <li>Your instruction to build, with the confirmed connector name</li>
+        <li>Your instruction to build, and the connector name from the report</li>
+        <li>A signed-off report that adheres to the schema and has the verdict <code>feasible</code> or <code>feasible-with-caveats</code>. Claude re-checks all three before it creates the branch. <code>not-feasible</code> and <code>insufficient-information</code> stop the build, and so does a failed schema check.</li>
         <li><b>Template</b>: the <code>target</code> folder of the Tools4ever V2 template repo</li>
         <li>A first commit on <code>main</code>, made by you</li>
       </ul></div>
@@ -222,7 +225,8 @@
       <div class="box in"><h3>Needs</h3><ul>
         <li>The template files in <code>Generated\&lt;Name&gt;</code></li>
         <li>The signed-off report</li>
-        <li>The API specification and the baseline users file</li>
+        <li>The API specification and the baseline documents for the type</li>
+        <li>The <code>type</code> in the report, which decides the template and the kind of connector to build</li>
       </ul></div>
       <div class="box out"><h3>Makes</h3><ul>
         <li><b>Connector code</b>: the five action scripts, <code>import.ps1</code>, <code>fieldMapping.json</code>, <code>configuration.json</code></li>

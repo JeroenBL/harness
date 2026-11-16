@@ -31,7 +31,7 @@ Answers as given in the interviews. Nothing here was added by the interviewer.
 ## Workflow, request to result
 
 1. Upstream of the pipeline: a request to build a connector for a customer arrives in Azure DevOps, and I take the API specification from the ticket. The pipeline for Claude starts when I provide that specification (step 2).
-2. Claude reads the API specification and writes a report: capabilities, caveats, which of create/enable/disable/update/delete are supported, and whether the API aligns with the baseline users file and the HelloID target systems documentation. I sign off the report. I run a connection test. If the API can't be reached, I build a mock.
+2. Claude reads the API specification and writes a report: capabilities, caveats, which of create/enable/disable/update/delete are supported, and whether the API aligns with the baseline documents for the connector type and the HelloID target systems documentation. I sign off the report. I run a connection test. If the API can't be reached, I build a mock.
 3. If the documentation is unclear, I email the vendor or customer. Some questions block.
 4. Claude develops the code in `Generated\<Name>` from the template. At the end of the build step, Claude creates a pull request on GitHub.
 5. I test against production if available, else the vendor's test environment, else a mock.
@@ -86,10 +86,11 @@ Nothing was named as existing only in my head. The vendor and customer answers a
 - Existing practice: a branch per task, and a pull request that is reviewed before merge.
 - Decision, parallel Claude sessions: I work in this folder only, with a branch per task, and run one Claude session at a time. I chose this over separate clones and worktrees. A branch switch in one session changes the files under any other, so a second session at the same time is not safe.
 - Decision, research: what the API can do is in the API specification, which comes as JSON, YAML, a Word document or a PDF. Claude reads the specification and writes a report of what the API can do. I sign off the report, and the connector is built from it: research the API, then the report, then build the connector.
-- Decision, what the research checks: the report checks whether the target's API aligns with two baselines, the baseline users file (`C:\_Data\connector-shared\baselineUsers.md`) and the HelloID target systems documentation (https://docs.helloid.com/en/provisioning/target-systems.html). The baseline is never the API under test. I give Claude the target's own specification in the session.
-- Decision, the name `<Name>`: Claude takes the connector name from the API specification and proposes it. I confirm it before it is used for the research report, the branch and `Generated\<Name>`.
+- Decision, what the research checks: the report checks whether the target's API aligns with two baselines, the baseline documents for the connector type (see "Connector types" below) and the HelloID target systems documentation (https://docs.helloid.com/en/provisioning/target-systems.html). I give Claude the API specification in the session. For a real connector that is the target's own specification. A baseline's own API may also be the API under test, to test the pipeline: that is a trial run with `trial: true`, which Claude runs without asking. Such a report compares the API with itself, so it says nothing about a real connector.
+- Decision, the name `<Name>`: Claude takes the connector name from the API specification. If the spec does not make it clear, Claude guesses it. Claude never asks me for the name.
 - Decision, where a new connector lives: a new connector gets its own branch `<Name>` in this repo. Its files live on that branch, in a new folder `Generated\<Name>` inside the `harness` repo (for example `Generated\Example`).
 - Decision, first commit: I make the first commit on `main` myself. Claude does not.
+- Decision, precondition for building: before anything is built, the report must adhere to the schema, its verdict must be `feasible` or `feasible-with-caveats`, and I must have signed it off. Claude re-checks all three before it creates the branch. If any fails, there is no branch, no folder and no code, and Claude says which check failed.
 - Decision, creating the connector folder and branch: when I tell Claude to build a new connector, Claude creates the branch `<Name>` and the folder `Generated\<Name>`.
 - Decision, template files: Claude fetches the template's `target` folder from the template repo into `Generated\<Name>`.
 - Decision, code route: Claude writes the code directly, not through the connector-gen skill. It builds from the template and the signed-off report.
@@ -101,9 +102,21 @@ Nothing was named as existing only in my head. The vendor and customer answers a
 - Decision, Claude and pull requests: Claude may open and review a pull request. I read its review, and Claude merges only after I explicitly say OK in the session.
 - Decision, pushing: Claude may push task branches only. Changes reach `main` through a merged pull request, not a direct push.
 
+## Connector types
+
+- There are three connector types: `source`, `target` and `target-access`. I set the type for the research, together with the API specification, and it is read first. It is recorded in the report's YAML field `type`. The build step reads that field to decide which type of connector to build. The schema `C:\_Data\connector-shared\feasibilitySchema.yaml` has the `type` field and a `typeInputs` list.
+- Per type, from the folders I added to `C:\_Data\connector-shared` (the mapping follows the folder names and is not yet confirmed by me):
+  - `source`: baseline documents `source\baselineSource.md` and `source\helloidPersonSchema.md`. Template: `templates\HelloID-Conn-Prov-Source-TemplateConnectorName`, a different PowerShell template with `persons.ps1`, `departments.ps1`, `configuration.json` and `mapping.json`.
+  - `target`: baseline document `target\baselineUsers.md` (moved there from the folder root). Template: the `target` folder of the Tools4ever V2 template on GitHub.
+  - `target-access`: baseline document `target-access\baselineAccess.md`. Template: the Tools4ever V2 `target` template, the same as for `target`, adapted.
+- The report has the same sections for every type. The rows in the action table and the field mapping table depend on the type, taken from the baseline documents for the type.
+- A source has no `fieldMapping.json`, but the report still has a mapping table. The mapping table has the same columns for every type: field, label, API field or parts, and evidence. For `source` the fields come from `source\helloidPersonSchema.md`, as in the example source report `C:\Temp\ConnectorX\reports\ExampleSource-feasibility.md`.
+- Standard labels taken over from the example source report: mapping labels Direct, Derivable, Missing, Not applicable; baseline comparison labels Equivalent, Different shape, Unclear. The schema has all of these. Source and target reports have the same sections, so there is no numbered "Checks" list for either type. The action status stays Confirmed, Potential or Not supported. An action "not found in the spec", as the source example calls it, is written as Not supported, with the reason in the evidence column.
+- Trial run on the example API: the connector name is `DemoTarget`.
+
 ## Upstream of the pipeline: the Azure DevOps ticket
 
-- The pipeline for Claude does not start with Azure DevOps. It starts with an API specification that I provide. The ticket is how I get that specification, and it is outside the pipeline. The first artifact in Claude's pipeline is the API specification.
+- The pipeline for Claude does not start with Azure DevOps. It starts with two inputs that I provide: the connector type and the API specification. The ticket is how I get that specification, and it is outside the pipeline. The first artifact in Claude's pipeline is the API specification.
 
 - Reader: me.
 - What I must be able to do with it: find the API specification, and start the research in a session.
@@ -118,12 +131,12 @@ Nothing was named as existing only in my head. The vendor and customer answers a
 - Readers: me, to sign it off, and a fresh Claude session, to build the connector. The session starts with no memory of the research.
 - What the builder must be able to do from the report alone: call the right endpoint per action, map fields to the baseline, and handle the caveats. The builder learns the authentication method from the report's API overview.
 - What I check before I sign off the report: the verdict matches the tables; every baseline field is mapped or has a stated gap; every blocking question names who answers it; and the schema check passed.
-- After a "does not fit" verdict I decide case by case: go on, ask the vendor, or stop.
-- What the builder already has besides the report: the API specification itself, the template files, the baseline users file (`C:\_Data\connector-shared\baselineUsers.md`) and `CLAUDE.md`. The report therefore does not repeat them.
+- The verdict gates the build. Once I have signed off the report: `feasible` and `feasible-with-caveats` let Claude start building, with the caveats in the README's Remarks. `not-feasible` and `insufficient-information` do not: Claude creates no branch and writes no code. For both `not-feasible` and `insufficient-information` I decide case by case what to do (for example ask the vendor, redo the report, or stop).
+- What the builder already has besides the report: the API specification itself, the template files, the baseline documents for the type and `CLAUDE.md`. The report therefore does not repeat them.
 - The report starts with a YAML block: target, spec, specSha256, reportDate, verdict, confidence, trial, sections. `sections` lists the sections the report contains.
 - New reports must adhere to a YAML schema, `C:\_Data\connector-shared\feasibilitySchema.yaml`, on my machine only. Claude checks each report against it before showing it to me.
 - Parts of the report: a verdict, sources, an API overview (authentication, resources, correlation, constraints), an action table (create, enable, disable, update, delete, each with status Confirmed, Potential or Not supported, endpoint and method, and evidence), a field mapping table, a baseline comparison, and caveats plus an open questions table (number, question, who answers, blocking or non-blocking). The `C:\_Data\connector-shared\feasibilityTemplate.md` template has the exact layout. Taken over from the example report `C:\Temp\reports\ExampleTarget-feasibility.md`.
-- The verdict is one of three values: fits, fits with gaps, does not fit.
+- The verdict uses standard labels, taken from the example report and the connector-scout skill's schema: `feasible`, `feasible-with-caveats`, `not-feasible`, `insufficient-information`. The schema file defines when each applies, and the confidence levels high, medium and low.
 - The report is written from a template: `C:\_Data\connector-shared\feasibilityTemplate.md`, on my machine only. The first run on the example API (`Basic-EXAMPLE-Target-API`, the same API as the baseline) is a trial run, so its report compares the baseline with itself and says nothing about a real target.
 
 ## Timing and the end of the workflow
