@@ -30,7 +30,7 @@ Answers as given in the interviews. Nothing here was added by the interviewer.
 ## Workflow, request to result
 
 1. A request to build a connector for a customer arrives in Azure DevOps.
-2. Claude reads the API specification and writes a report: capabilities, caveats, which of create/enable/disable/update/delete are supported. I sign off the report. I run a connection test. If the API can't be reached, I build a mock.
+2. Claude reads the API specification and writes a report: capabilities, caveats, which of create/enable/disable/update/delete are supported, and whether the API aligns with the baseline users file and the HelloID target systems documentation. I sign off the report. I run a connection test. If the API can't be reached, I build a mock.
 3. If the documentation is unclear, I email the vendor or customer. Some questions block.
 4. I develop the code in VS Code from the template, in Azure DevOps.
 5. I test against production if available, else the vendor's test environment, else a mock.
@@ -85,6 +85,7 @@ Nothing was named as existing only in my head. The vendor and customer answers a
 - Existing practice: a branch per task, and a pull request that is reviewed before merge.
 - Decision, parallel Claude sessions: I work in this folder only, with a branch per task, and run one Claude session at a time. I chose this over separate clones and worktrees. A branch switch in one session changes the files under any other, so a second session at the same time is not safe.
 - Decision, research: what the API can do is in the API specification, which comes as JSON, YAML, a Word document or a PDF. Claude reads the specification and writes a report of what the API can do. I sign off the report, and the connector is built from it: research the API, then the report, then build the connector.
+- Decision, what the research checks: the report checks whether the target's API aligns with two baselines, the baseline users file (`C:\_Data\connector-shared\baselineUsers.md`) and the HelloID target systems documentation (https://docs.helloid.com/en/provisioning/target-systems.html). The baseline is never the API under test. I give Claude the target's own specification in the session.
 - Decision, the name `<Name>`: I give the connector name in the session when I tell Claude to build it. Claude uses it for the branch and for `Generated\<Name>`.
 - Decision, where a new connector lives: a new connector gets its own branch `<Name>` in this repo. Its files live on that branch, in a new folder `Generated\<Name>` inside the `harness` repo (for example `Generated\Example`).
 - Decision, first commit: I make the first commit on `main` myself. Claude does not.

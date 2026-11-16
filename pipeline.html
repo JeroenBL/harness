@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connector Pipeline</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --ink: #1c2230; --muted: #5d667a; --line: #dde1e8;
+    --you: #1f6feb; --you-bg: #e6f0ff;
+    --claude: #b4531f; --claude-bg: #fdeee3;
+    --mate: #6b45c4; --mate-bg: #efe9fb;
+    --need: #0b7a5a; --need-bg: #e2f5ee;
+    --make: #8a5a00; --make-bg: #fff3d6;
+    --gap: #b3261e; --gap-bg: #fde8e6;
+    --hand: #2f3b52; --hand-bg: #eef1f6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f131b; --card: #171c27; --ink: #e8ebf2; --muted: #9aa3b5; --line: #2a3142;
+      --you: #7fb0ff; --you-bg: #1a2a45;
+      --claude: #ffa66b; --claude-bg: #3a2415;
+      --mate: #b9a0ff; --mate-bg: #2a2142;
+      --need: #5fd4ad; --need-bg: #14322a;
+      --make: #f2c15a; --make-bg: #3a2e12;
+      --gap: #ff8f86; --gap-bg: #3d1a18;
+      --hand: #c9d2e6; --hand-bg: #1d2433;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f131b; --card: #171c27; --ink: #e8ebf2; --muted: #9aa3b5; --line: #2a3142;
+    --you: #7fb0ff; --you-bg: #1a2a45;
+    --claude: #ffa66b; --claude-bg: #3a2415;
+    --mate: #b9a0ff; --mate-bg: #2a2142;
+    --need: #5fd4ad; --need-bg: #14322a;
+    --make: #f2c15a; --make-bg: #3a2e12;
+    --gap: #ff8f86; --gap-bg: #3d1a18;
+    --hand: #c9d2e6; --hand-bg: #1d2433;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.9rem; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 0 0 28px; font-size: .85rem; color: var(--muted); }
+  .chip { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .78rem; font-weight: 600; }
+  .you { color: var(--you); background: var(--you-bg); }
+  .claude { color: var(--claude); background: var(--claude-bg); }
+  .mate { color: var(--mate); background: var(--mate-bg); }
+  .need { color: var(--need); background: var(--need-bg); }
+  .make { color: var(--make); background: var(--make-bg); }
+  .gap { color: var(--gap); background: var(--gap-bg); }
+
+  .step {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 20px; position: relative;
+  }
+  .step-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .num {
+    width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--ink); color: var(--bg); font-weight: 700; flex: none;
+  }
+  .step-head h2 { font-size: 1.1rem; margin: 0; flex: 1 1 200px; }
+  .io { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .box { border-radius: 10px; padding: 10px 12px; font-size: .92rem; }
+  .box.in { background: var(--need-bg); }
+  .box.out { background: var(--make-bg); }
+  .box h3 { margin: 0 0 4px; font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; }
+  .box.in h3 { color: var(--need); }
+  .box.out h3 { color: var(--make); }
+  .box ul { margin: 0; padding-left: 18px; }
+  .box li { margin: 2px 0; }
+  code { font: .85em ui-monospace, Consolas, monospace; background: rgba(127,127,127,.15); padding: 1px 5px; border-radius: 4px; }
+  .signoff { margin-top: 10px; font-size: .85rem; color: var(--muted); }
+  .signoff b { color: var(--ink); }
+
+  .hand {
+    margin: 0 0 0 17px; padding: 6px 0 6px 28px; border-left: 3px dashed var(--line);
+  }
+  .hand-card {
+    background: var(--hand-bg); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 14px; font-size: .88rem;
+  }
+  .hand-card .t { font-weight: 700; color: var(--hand); margin-bottom: 4px; }
+  .hand-card dl { margin: 0; display: grid; grid-template-columns: 90px 1fr; gap: 2px 10px; }
+  .hand-card dt { color: var(--muted); }
+  .hand-card dd { margin: 0; }
+  .hand-card.gapcard { background: var(--gap-bg); border-color: var(--gap); }
+  .hand-card.gapcard .t { color: var(--gap); }
+
+  .standing { margin-top: 32px; }
+  .standing h2, .gaps h2 { font-size: 1.1rem; }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .gaps { margin-top: 28px; background: var(--gap-bg); border: 1px solid var(--gap); border-radius: 14px; padding: 6px 20px 14px; }
+  .gaps h2 { color: var(--gap); }
+  footer { margin-top: 28px; color: var(--muted); font-size: .8rem; }
+  @media (max-width: 640px) {
+    .io { grid-template-columns: 1fr; }
+    .hand { margin-left: 6px; padding-left: 16px; }
+    .hand-card dl { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Connector pipeline</h1>
+  <p class="sub">From request to published connector: who acts, which artifact each step needs and makes, and what is passed on at every handoff.</p>
+
+  <div class="legend">
+    <span><span class="chip you">You</span></span>
+    <span><span class="chip claude">Claude</span></span>
+    <span><span class="chip mate">Colleague</span></span>
+    <span><span class="chip need">Needs</span> an input artifact</span>
+    <span><span class="chip make">Makes</span> an output artifact</span>
+    <span><span class="chip gap">Gap</span> not decided yet</span>
+  </div>
+
+  <!-- 1 -->
+  <section class="step">
+    <div class="step-head"><div class="num">1</div><h2>Request arrives</h2><span class="chip you">You</span></div>
+    <div class="io">
+      <div class="box in"><h3>Needs</h3><ul><li>A customer request</li></ul></div>
+      <div class="box out"><h3>Makes</h3><ul>
+        <li><b>Azure DevOps ticket</b>: customer name, link to the API documentation, what the customer wants</li>
+      </ul></div>
+    </div>
+    <div class="signoff">Sign-off: <b>none</b>. The customer's wishes are adjusted as the last step.</div>
+  </section>
+
+  <div class="hand"><div class="hand-card">
+    <div class="t">Handoff 1: request to API research</div>
+    <dl><dt>Passed on</dt><dd>Customer name, API documentation link, what the customer wants</dd>
+        <dt>Used by</dt><dd>Claude's API research</dd>
+        <dt>Lives in</dt><dd>Azure DevOps ticket</dd></dl>
+  </div></div>
+
+  <!-- 2 -->
+  <section class="step">
+    <div class="step-head"><div class="num">2</div><h2>Give Claude the API specification</h2><span class="chip you">You</span></div>
+    <div class="io">
+      <div class="box in"><h3>Needs</h3><ul>
+        <li><b>API specification</b>: JSON, YAML, Word or PDF</li>
+        <li>The connector name</li>
+      </ul></div>
+      <div class="box out"><h3>Makes</h3><ul>
+        <li>Path or link given in the session</li>
+        <li>The spec stays outside the repo, wherever you keep it</li>
+      </ul></div>
+    </div>
+    <div class="signoff">Sign-off: <b>none</b>. Never add the spec to the repo.</div>
+  </section>
+
+  <!-- 3 -->
+  <section class="step" style="margin-top:12px">
+    <div class="step-head"><div class="num">3</div><h2>Ask the vendor or customer</h2><span class="chip claude">Claude drafts</span><span class="chip you">You send</span></div>
+    <div class="io">
+      <div class="box in"><h3>Needs</h3><ul>
+        <li>An unclear spec (this happens in almost every API)</li>
+      </ul></div>
+      <div class="box out"><h3>Makes</h3><ul>
+        <li><b>Email questions</b> and answers, in your mailbox</li>
+        <li>Sometimes a note in the ticket</li>
+      </ul></div>
+    </div>
+    <div class="signoff">Sign-off: <b>you approve each email</b>. Waits run from days to weeks. You either stop work or build on assumptions, and fix any gap later.</div>
+  </section>
+
+  <!-- 4 -->
+  <section class="step" style="margin-top:12px">
+    <div class="step-head"><div class="num">4</div><h2>Write the API research report</h2><span class="chip claude">Claude</span></div>
+    <div class="io">
+      <div class="box in"><h3>Needs</h3><ul>
+        <li>The API specification</li>
+        <li>Vendor and customer answers, as you tell them</li>
+      </ul></div>
+      <div class="box out"><h3>Makes</h3><ul>
+        <li><b>Research report</b>: capabilities, caveats, which of create, enable, disable, update and delete are supported</li>
+        <li><code>reports/&lt;Name&gt;-feasibility.md</code>, local, ignored by git</li>
+      </ul></div>
+    </div>
+    <div class="signoff">Sign-off: <b>you sign off</b> before the connector is built from it.</div>
+  </section>
+
+  <div class="hand"><div class="hand-card">
+    <div class="t">Handoff 2: research to development</div>
+    <dl><dt>Passed on</dt><dd>The signed-off report</dd>
+        <dt>Used by</dt><dd>Writing the code</dd>
+        <dt>Lives in</dt><dd><code>harness\reports\&lt;Name&gt;-feasibility.md</code>, your machine only. The emails stay in your mailbox.</dd></dl>
+  </div></div>
+
+  <!-- 5 -->
+  <section class="step">
+    <div class="step-head"><div class="num">5</div><h2>Create the branch and the connector folder</h2><span class="chip claude">Claude</span></div>
+    <div class="io">
+      <div class="box in"><h3>Needs</h3><ul>
+        <li>Your instruction to build, with the connector name</li>
+        <li><b>Template</b>: the <code>target</code> folder of the Tools4ever V2 template repo</li>
+        <li>A first commit on <code>main</code>, made by you</li>
+      </ul></div>
+      <div class="box out"><h3>Makes</h3><ul>
+        <li>Branch <code>&lt;Name&gt;</code> in the <code>harness</code> repo</li>
+        <li>Folder <code>Generated\&lt;Name&gt;</code> filled with the template files</li>
+      </ul></div>
+    </div>
+    <div class="signoff">Sign-off: <b>none</b>. Claude may push task branches only, never <code>main</code>.</div>
+  </section>
+
+  <!-- 6 -->
+  <section class="step" style="margin-top:12px">
+    <div class="step-head"><div class="num">6</div><h2>Develop the connector</h2><span class="chip claude">Claude</span></div>
+    <div class="io">
+      <div class="box in"><h3>Needs</h3><ul>
+        <li>The template files in <code>Generated\&lt;Name&gt;</code></li>
+        <li>The signed-off report</li>
+      </ul></div>
+      <div class="box out"><h3>Makes</h3><ul>
+        <li><b>Connector code</b>: the five action scripts, <code>import.ps1</code>, <code>fieldMapping.json</code>, <code>configuration.json</code></li>
+        <li><b>README</b> with a Remarks section for caveats, and <b>CHANGELOG</b></li>
+      </ul></div>
+    </div>
+    <div class="signoff">Sign-off: <b>you sign off</b> the code, README and CHANGELOG before they go into the pull request. Everything in the README is published.</div>
+  </section>
+
+  <div class="hand"><div class="hand-card">
+    <div class="t">Handoff 3: development to testing</div>
+    <dl><dt>Passed on</dt><dd>The code, the credentials, the connection settings, and a mock if needed</dd>
+        <dt>Used by</dt><dd>Testing</dd>
+        <dt>Lives in</dt><dd>Code on the branch. Credentials and connection settings in KeePassXC, which Claude never reads. The mock on your machine.</dd></dl>
+  </div></div>
+
+  <!-- 7 -->
+  <section class="step">
+    <div class="step-head"><div class="num">7</div><h2>Test</h2><span class="chip you">You</span><span class="chip claude">Claude, mocks only</span></div>
+    <div class="io">
+      <div class="box in"><h3>Needs</h3><ul>
+        <li>Production, a vendor test environment, or a mock, depending on what is available</li>
+        <li><b>KeePassXC</b> entries: credentials and connection settings</li>
+      </ul></div>
+      <div class="box out"><h3>Makes</h3><ul>
+        <li><b>Mock of the API</b>, when no real environment exists</li>
+        <li><b><code>test</code> folder</b>: debug scripts and <code>actionContext.json</code>, local, ignored by git</li>
+      </ul></div>
+    </div>
+    <div class="signoff">Sign-off: <b>none</b> for the mock and the test folder. Claude only tests against mocks and never uses the KeePassXC CLI. Waiting for test access also takes days to weeks.</div>
+  </section>
+
+  <div class="hand"><div class="hand-card">
+    <div class="t">Handoff 4: testing to review</div>
+    <dl><dt>Passed on</dt><dd>The code in a pull request. Caveats are in the README's Remarks section, and the pull request description only points to it.</dd>
+        <dt>Used by</dt><dd>Your colleague</dd>
+        <dt>Lives in</dt><dd>Azure DevOps pull request</dd></dl>
+  </div></div>
+
+  <div class="hand"><div class="hand-card gapcard">
+    <div class="t">Gap: harness branch to Azure DevOps</div>
+    <dl><dt>Problem</dt><dd>The code now lives on a <code>harness</code> branch on GitHub, but the review is a pull request in Azure DevOps. How the code moves from one to the other is not decided.</dd></dl>
+  </div></div>
+
+  <!-- 8 -->
+  <section class="step">
+    <div class="step-head"><div class="num">8</div><h2>Review</h2><span class="chip you">You open it</span><span class="chip mate">Colleague reviews</span></div>
+    <div class="io">
+      <div class="box in"><h3>Needs</h3><ul>
+        <li>The code, README and CHANGELOG</li>
+      </ul></div>
+      <div class="box out"><h3>Makes</h3><ul>
+        <li><b>Pull request</b> in Azure DevOps with code comments</li>
+        <li>Usually one round of changes</li>
+      </ul></div>
+    </div>
+    <div class="signoff">Sign-off: <b>your colleague's review</b>. You create the pull request and its description yourself.</div>
+  </section>
+
+  <div class="hand"><div class="hand-card">
+    <div class="t">Handoff 5: approved review to publishing</div>
+    <dl><dt>Passed on</dt><dd>Everything in the connector folder except the <code>test</code> folder, including README and CHANGELOG</dd>
+        <dt>Used by</dt><dd>The published connector</dd>
+        <dt>Lives in</dt><dd>GitHub repo, added by hand</dd></dl>
+  </div></div>
+
+  <!-- 9 -->
+  <section class="step">
+    <div class="step-head"><div class="num">9</div><h2>Publish</h2><span class="chip you">You</span></div>
+    <div class="io">
+      <div class="box in"><h3>Needs</h3><ul>
+        <li>The approved connector files</li>
+        <li>The connector name</li>
+      </ul></div>
+      <div class="box out"><h3>Makes</h3><ul>
+        <li><b>GitHub repo</b> <code>HelloID-Conn-Prov-Target-&lt;Name&gt;</code>, created by hand</li>
+      </ul></div>
+    </div>
+    <div class="signoff">Sign-off: <b>you produce it yourself</b>. Claude doesn't prepare or decide the publication. Nothing follows this step.</div>
+  </section>
+
+  <section class="standing">
+    <h2>Standing artifacts</h2>
+    <div class="grid3">
+      <div class="box in"><h3>Needed throughout</h3><ul>
+        <li><b>CLAUDE.md</b>: the harness agreement Claude reads each session</li>
+        <li><b>systems.md</b>: workflow, systems and handoffs</li>
+      </ul></div>
+      <div class="box in"><h3>Yours alone</h3><ul>
+        <li><b>Best-practices file</b> in <code>C:\_Data\connector-shared</code>. Claude doesn't change it.</li>
+      </ul></div>
+      <div class="box in"><h3>Source for new connectors</h3><ul>
+        <li><b>Tools4ever V2 template</b> on GitHub, the <code>target</code> folder</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <section class="gaps">
+    <h2>Gaps</h2>
+    <ul>
+      <li>The route from the <code>harness</code> branch to the Azure DevOps pull request is not decided.</li>
+      <li>One line in <code>systems.md</code> still says you develop the code "in Azure DevOps". That is out of date next to steps 5 and 6.</li>
+    </ul>
+  </section>
+
+  <footer>Built from the decisions in CLAUDE.md and systems.md. Local files only: reports, test folders and the API spec are never committed.</footer>
+</div>
+</body>
+</html>

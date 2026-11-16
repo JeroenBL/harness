@@ -22,6 +22,13 @@ Decisions made by the owner. Workflow, systems and handoffs are in systems.md.
 - The API specification stays outside this repo. The owner gives Claude its path or link in the session. Never add it to the repo.
 - `reports/` and `Generated/*/test/` stay local. Git ignores them (see .gitignore). Never force-add them.
 
+## Research: what the report checks
+- API research comes first, before any branch or code. Claude reads the API specification, writes `reports/<Name>-feasibility.md`, and the owner signs it off.
+- The report checks whether the target's API aligns with the baseline:
+  - the baseline users file: C:\_Data\connector-shared\baselineUsers.md
+  - the HelloID target systems documentation: https://docs.helloid.com/en/provisioning/target-systems.html
+- The baseline is never the API under test. The owner gives the path or link of the target's own specification in the session.
+
 ## Credentials and testing
 - Claude never uses the KeePassXC CLI.
 - Claude tests only against mocked APIs. It may run the debug scripts only when they point at a mock.
